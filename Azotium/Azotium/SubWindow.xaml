@@ -1,0 +1,23 @@
+﻿<Window x:Name="window" x:Class="Azotium.SubWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Azotium"
+        xmlns:ctrls="clr-namespace:Azotium.Controls"
+        mc:Ignorable="d"
+        Title="SubWindow" 
+        Height="300" 
+        Width="500" 
+        Topmost="True" 
+        ResizeMode="CanResizeWithGrip" 
+        WindowStartupLocation="CenterScreen" 
+        WindowStyle="None" 
+        AllowsTransparency="True"
+        Loaded="window_Loaded"
+        Background="#19000000"
+        ShowInTaskbar="False">
+    <ctrls:WebBrowser x:Name="wb" DataContext="{Binding DataContext, ElementName=window}" />
+
+
+</Window>
