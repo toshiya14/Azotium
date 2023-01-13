@@ -1,4 +1,5 @@
 ﻿using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Command;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -6,9 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Forms;
 
 namespace Azotium.ViewModel
 {
+    [JsonObject(MemberSerialization.OptIn)]
     public class WindowViewModel : ViewModelBase
     {
         private string _Address;
@@ -18,6 +21,11 @@ namespace Azotium.ViewModel
         private bool _IsPosLocked;
         private bool _IsTopMost;
         private bool _IsAltTabHidden;
+        private bool _IsActivated;
+        private int _X;
+        private int _Y;
+        private int _Width;
+        private int _Height;
         private SubWindow _BindingWindow;
 
         [JsonProperty(PropertyName = "_id")]
@@ -34,13 +42,52 @@ namespace Azotium.ViewModel
             set => Set(ref _Address, value);
         }
 
+        [JsonProperty(PropertyName = "_x")]
+        public int X
+        {
+            get => _X;
+            set => Set(ref _X, value);
+        }
+
+        [JsonProperty(PropertyName = "_y")]
+        public int Y
+        {
+            get => _Y;
+            set => Set(ref _Y, value);
+        }
+
+        [JsonProperty(PropertyName = "width")]
+        public int Width
+        {
+            get => _Width;
+            set => Set(ref _Width, value);
+        }
+
+        [JsonProperty(PropertyName = "height")]
+        public int Height
+        {
+            get => _Height;
+            set => Set(ref _Height, value);
+        }
+
         [JsonProperty(PropertyName = "opacity")]
         public int Opacity
         {
             get => _Opacity;
             set
             {
-                Set(ref _Opacity, value);
+                if (value < 0)
+                {
+                    Set(ref _Opacity, 0);
+                }
+                else if (value > 100)
+                {
+                    Set(ref _Opacity, 100);
+                }
+                else
+                {
+                    Set(ref _Opacity, value);
+                }
                 RaisePropertyChanged("OpacityFloat");
             }
         }
@@ -62,9 +109,32 @@ namespace Azotium.ViewModel
                 {
                     WindowUtils.SetWindowClickThrough(BindingWindow);
                 }
-                else if(!value && BindingWindow != null)
+                else if (!value && BindingWindow != null)
                 {
                     WindowUtils.SetWindowNotClickThrough(BindingWindow);
+                }
+            }
+        }
+
+        [JsonProperty(PropertyName = "activated")]
+        public bool IsActivated
+        {
+            get => _IsActivated;
+            set
+            {
+                Set(ref _IsActivated, value);
+                if (value && this.BindingWindow == null)
+                {
+                    this.BindingWindow = new SubWindow();
+                    this.BindingWindow.DataContext = this;
+                    this.BindingWindow.Loaded += BindingWindowLoaded;
+                    this.BindingWindow.TitleChanged += BindingWindowTitleChanged;
+                    this.BindingWindow.Show();
+                }
+                else if(!value && this.BindingWindow != null)
+                {
+                    this.BindingWindow.Close();
+                    this.BindingWindow = null;
                 }
             }
         }
@@ -78,11 +148,11 @@ namespace Azotium.ViewModel
                 Set(ref _IsAltTabHidden, value);
                 if (value && BindingWindow != null)
                 {
-                    WindowUtils.RecoverAltTabShown(BindingWindow);
+                    WindowUtils.HideAltTabShown(BindingWindow);
                 }
                 else if (!value && BindingWindow != null)
                 {
-                    WindowUtils.HideAltTabShown(BindingWindow);
+                    WindowUtils.RecoverAltTabShown(BindingWindow);
                 }
             }
         }
@@ -102,7 +172,7 @@ namespace Azotium.ViewModel
                     BindingWindow.PosLock = false;
                     BindingWindow.UpdateLayout();
                 }
-                else if(value && BindingWindow != null)
+                else if (value && BindingWindow != null)
                 {
                     BindingWindow.ResizeMode = System.Windows.ResizeMode.NoResize;
                     BindingWindow.PosLock = true;
@@ -126,20 +196,36 @@ namespace Azotium.ViewModel
             }
         }
 
-        [JsonIgnore]
+        public RelayCommand ShowDevToolsCommand { get; set; }
+
+
         public SubWindow BindingWindow
         {
             get => _BindingWindow;
-            set { 
+            set
+            {
                 Set(ref _BindingWindow, value);
-                IsMouseThrough = IsMouseThrough;
-                IsAltTabHidden = IsAltTabHidden;
-                IsPosLocked = IsPosLocked;
-                IsTopMost = IsTopMost;
+                if (BindingWindow != null && !BindingWindow.IsLoaded && BindingWindow.Visibility != Visibility.Visible)
+                {
+                    BindingWindow.Loaded += BindingWindowLoaded;
+                }
             }
         }
 
-        [JsonIgnore]
+        private void BindingWindowLoaded(object sender, RoutedEventArgs args)
+        {
+            IsMouseThrough = IsMouseThrough;
+            IsPosLocked = IsPosLocked;
+            IsTopMost = IsTopMost;
+            IsAltTabHidden = IsAltTabHidden;
+            IsActivated = IsActivated;
+        }
+
+        private void BindingWindowTitleChanged(object sender, DependencyPropertyChangedEventArgs args)
+        {
+            this.BindingWindow.Title = "Azotium - " + args.NewValue.ToString();
+        }
+
         public Visibility HandleVisibility
         {
             get => IsPosLocked ? Visibility.Hidden : Visibility.Visible;
@@ -153,6 +239,37 @@ namespace Azotium.ViewModel
             this.IsPosLocked = false;
             this.IsTopMost = true;
             this.Opacity = 100;
+            ShowDevToolsCommand = new RelayCommand(ShowDevTools);
         }
+
+        public void ShowDevTools()
+        {
+            this.BindingWindow.ShowDevTools();
+        }
+
+        public static Rect GetDefaultPosSize(Screen cws)
+        {
+            var defaultHeight = 300;
+            var defaultWidth = 500;
+
+            var _CWSCenter = new Point()
+            {
+                X = cws.WorkingArea.Left + cws.WorkingArea.Width / 2,
+                Y = cws.WorkingArea.Top + cws.WorkingArea.Height / 2
+            };
+
+            var X = Convert.ToInt32(_CWSCenter.X - defaultWidth / 2);
+            var Y = Convert.ToInt32(_CWSCenter.Y - defaultHeight / 2);
+
+            return new Rect()
+            {
+                X = X,
+                Y = Y,
+                Height = defaultHeight,
+                Width = defaultWidth
+            };
+        }
+
+
     }
 }

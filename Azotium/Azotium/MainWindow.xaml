@@ -13,6 +13,9 @@
         <i:EventTrigger EventName="Closing">
             <i:InvokeCommandAction Command="{Binding CMDClosingMainWindow}"/>
         </i:EventTrigger>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding CMDLoadedMainWindow}" CommandParameter="{Binding ElementName=window, Mode=OneWay}" />
+        </i:EventTrigger>
     </i:Interaction.Triggers>
     <Grid x:Name="RootGrid">
         <DockPanel LastChildFill="True">
@@ -47,7 +50,7 @@
                     <Border></Border>
                     <Image Source="/Azotium;component/Resources/donate.png" Margin="2" ToolTip="捐赠"></Image>
                 </Grid>
-                <Grid DockPanel.Dock="Right">
+                <Grid DockPanel.Dock="Right" MouseUp="Grid_MouseUp">
                     <Border></Border>
                     <Image Source="/Azotium;component/Resources/gear.png" Margin="2" ToolTip="全局设置"></Image>
                 </Grid>
@@ -56,6 +59,7 @@
             <DockPanel DockPanel.Dock="Bottom" Height="28" LastChildFill="False">
                 <DockPanel.Resources>
                     <Style TargetType="Button">
+                        <Setter Property="BorderThickness" Value="0"></Setter>
                         <Setter Property="Background" Value="#BBBBEE"></Setter>
                         <Setter Property="BorderBrush" Value="#AAAABB"></Setter>
                         <Setter Property="Margin" Value="3"></Setter>
@@ -90,6 +94,7 @@
                         <DockPanel DockPanel.Dock="Bottom" Height="28" LastChildFill="False">
                             <DockPanel.Resources>
                                 <Style TargetType="Button">
+                                    <Setter Property="BorderThickness" Value="0"></Setter>
                                     <Setter Property="Background" Value="#BBBBEE"></Setter>
                                     <Setter Property="BorderBrush" Value="#AAAABB"></Setter>
                                     <Setter Property="Margin" Value="3"></Setter>
@@ -98,7 +103,7 @@
                                 </Style>
                             </DockPanel.Resources>
                             <Button DockPanel.Dock="Left" Content="刷新窗体页面"></Button>
-                            <Button DockPanel.Dock="Left" Content="打开 Debug 工具"></Button>
+                            <Button DockPanel.Dock="Left" Content="打开 Debug 工具" Click="ShowFloatingWindowDevTools"></Button>
                             <Button DockPanel.Dock="Left" Content="截图保存"></Button>
                         </DockPanel>
                         <Grid Margin="10">
@@ -107,6 +112,7 @@
                                 <ColumnDefinition />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="28"/>
                                 <RowDefinition Height="28"/>
                                 <RowDefinition Height="28"/>
                                 <RowDefinition Height="28"/>
@@ -124,9 +130,10 @@
                                 </Style>
                             </Grid.Resources>
                             <TextBlock Text="窗体别名"></TextBlock>
-                            <TextBlock Text="页面地址" Grid.Row="1"></TextBlock>
-                            <TextBlock Text="不透明度" Grid.Row="2"></TextBlock>
-                            <GroupBox Grid.Row="3" Grid.ColumnSpan="2" Header="杂项">
+                            <TextBlock Text="激活窗口" Grid.Row="1"></TextBlock>
+                            <TextBlock Text="页面地址" Grid.Row="2"></TextBlock>
+                            <TextBlock Text="不透明度" Grid.Row="3"></TextBlock>
+                            <GroupBox Grid.Row="4" Grid.ColumnSpan="2" Header="杂项">
                                 <StackPanel Orientation="Horizontal" Height="28" VerticalAlignment="Center">
                                     <StackPanel.Resources>
                                         <Style TargetType="CheckBox">
@@ -142,8 +149,9 @@
                                 </StackPanel>
                             </GroupBox>
                             <TextBox Grid.Column="1" Text="{Binding CurrentFloatWindow.Name, Mode=TwoWay}"></TextBox>
-                            <TextBox Grid.Row="1" Text="{Binding CurrentFloatWindow.Address, Mode=TwoWay}" Grid.Column="1"></TextBox>
-                            <DockPanel Grid.Row="2" Grid.Column="1">
+                            <CheckBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" Margin="3" Content="勾选以激活并使用窗口" IsChecked="{Binding CurrentFloatWindow.IsActivated, Mode=TwoWay}"></CheckBox>
+                            <TextBox Grid.Row="2" Text="{Binding CurrentFloatWindow.Address, Mode=TwoWay}" Grid.Column="1"></TextBox>
+                            <DockPanel Grid.Row="3" Grid.Column="1">
                                 <TextBox Width="50" VerticalAlignment="Center" Padding="1" Text="{Binding CurrentFloatWindow.Opacity, Mode=TwoWay}"/>
                                 <Slider VerticalAlignment="Center" Margin="0,3" Minimum="0" Maximum="100" Value="{Binding CurrentFloatWindow.Opacity, Mode=TwoWay}"></Slider>
                             </DockPanel>
@@ -160,14 +168,14 @@
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ColorAnimation Storyboard.TargetProperty="Background" To="#66F0F0E6" Duration="00:00:00.20"></ColorAnimation>
+                                        <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#66F0F0E6" Duration="00:00:00.20"></ColorAnimation>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
                             <DataTrigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ColorAnimation Storyboard.TargetProperty="Background" To="#00F0F0E6" Duration="00:00:00.20"></ColorAnimation>
+                                        <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#00F0F0E6" Duration="00:00:00.20"></ColorAnimation>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.ExitActions>

@@ -1,6 +1,7 @@
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -8,6 +9,9 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Forms;
+using System.Windows.Interop;
+using MessageBox = System.Windows.MessageBox;
 
 namespace Azotium.ViewModel
 {
@@ -28,12 +32,16 @@ namespace Azotium.ViewModel
         private WindowViewModel _CurrentFloatWindow;
         private bool _IsMainWindowBusy;
         private string _ProcessingTaskMessage;
+        private MainWindow _BindingWindow;
+        private Screen _CurrentWorkingScreen;
         private static readonly JsonSerializerSettings _SubWindowJsonSettings;
         private static readonly string _SubWindowConfigPath = Path.Combine(App.RootPath, "swconf.json");
 
         public RelayCommand CMDCreateFloatWindow { get; private set; }
 
         public RelayCommand CMDClosingMainWindow { get; private set; }
+
+        public RelayCommand<MainWindow> CMDLoadedMainWindow { get; private set; }
 
         public ObservableCollection<WindowViewModel> FloatWindowSet { get; set; }
 
@@ -64,6 +72,12 @@ namespace Azotium.ViewModel
             set => Set(ref _ProcessingTaskMessage, value);
         }
 
+        public MainWindow BindingWindow
+        {
+            get => _BindingWindow;
+            set => Set(ref _BindingWindow, value);
+        }
+
         public WindowViewModel CurrentFloatWindow
         {
             get => _CurrentFloatWindow;
@@ -84,10 +98,9 @@ namespace Azotium.ViewModel
         {
             _SubWindowJsonSettings = new JsonSerializerSettings()
             {
-                CheckAdditionalContent = true,
                 DateFormatHandling = DateFormatHandling.IsoDateFormat,
                 Formatting = Formatting.Indented,
-                NullValueHandling = NullValueHandling.Ignore
+                NullValueHandling = NullValueHandling.Ignore,
             };
         }
 
@@ -96,39 +109,40 @@ namespace Azotium.ViewModel
         /// </summary>
         public MainViewModel()
         {
-            IsMainWindowBusy = true;
-            ProcessingTaskMessage = "正在初始化浮窗...";
-            InitializeFloatWindowSet();
-            IsMainWindowBusy = false;
-
-            CMDCreateFloatWindow = new RelayCommand(() => 
+            CMDCreateFloatWindow = new RelayCommand(() =>
             {
                 if (FloatWindowSet.Count >= 200)
                 {
                     MessageBox.Show("浮窗总数已达到最大数量，无法创建200以上个浮窗。", "发生错误", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
+                DetectCurrentWorkingScreen();
                 var vm = new WindowViewModel()
                 {
                     Name = GetNewName(),
                     Address = "about:blank"
                 };
-                var wnd = new SubWindow()
-                {
-                    DataContext = vm
-                };
-                vm.BindingWindow = wnd;
-                wnd.Show();
+                ResetPosToSubWindowViewModel(vm);
                 FloatWindowSet.Add(vm);
+                vm.IsActivated = true;
                 CurrentFloatWindow = FloatWindowSet.Last();
             });
-            CMDClosingMainWindow = new RelayCommand(() => 
+            CMDClosingMainWindow = new RelayCommand(() =>
             {
                 SaveFloatWindowSet();
                 foreach (var wnd in (from vm in FloatWindowSet where vm.BindingWindow != null select vm.BindingWindow))
                 {
                     wnd.Close();
                 }
+            });
+            CMDLoadedMainWindow = new RelayCommand<MainWindow>(wnd =>
+            {
+                DetectCurrentWorkingScreen();
+
+                IsMainWindowBusy = true;
+                ProcessingTaskMessage = "正在初始化浮窗...";
+                InitializeFloatWindowSet();
+                IsMainWindowBusy = false;
             });
         }
 
@@ -155,15 +169,9 @@ namespace Azotium.ViewModel
                 {
                     var content = File.ReadAllText(_SubWindowConfigPath);
                     FloatWindowSet = JsonConvert.DeserializeObject<ObservableCollection<WindowViewModel>>(content, _SubWindowJsonSettings);
+                    ResetPosToFloatWindowSet();
                     CurrentFloatWindow = FloatWindowSet.First();
-                    foreach(var vm in FloatWindowSet)
-                    {
-                        vm.BindingWindow = new SubWindow()
-                        {
-                            DataContext = vm
-                        };
-                        vm.BindingWindow.Show();
-                    }
+                    DetectCurrentWorkingScreen();
                 }
                 else
                 {
@@ -185,6 +193,51 @@ namespace Azotium.ViewModel
                 File.WriteAllText(_SubWindowConfigPath, JsonConvert.SerializeObject(FloatWindowSet, _SubWindowJsonSettings), Encoding.UTF8);
             }
             catch { }
+        }
+
+        private void ResetPosToFloatWindowSet()
+        {
+            foreach (var vm in FloatWindowSet)
+            {
+                ResetPosToSubWindowViewModel(vm);
+            }
+        }
+
+        private void ResetPosToSubWindowViewModel(WindowViewModel vm)
+        {
+            var defaultRect = WindowViewModel.GetDefaultPosSize(_CurrentWorkingScreen);
+            if (vm.X > 0 && vm.Y <= 0)
+            {
+                vm.Y = 0;
+            }
+            if (vm.Y > 0 && vm.X <= 0)
+            {
+                vm.X = 0;
+            }
+            if (vm.X <= 0 && vm.Y <= 0)
+            {
+                vm.X = Convert.ToInt32(defaultRect.X);
+                vm.Y = Convert.ToInt32(defaultRect.Y);
+            }
+            if (vm.Width <= 0 || vm.Height <= 0)
+            {
+                vm.Height = Convert.ToInt32(defaultRect.Height);
+                vm.Width = Convert.ToInt32(defaultRect.Width);
+            }
+        }
+
+        private void DetectCurrentWorkingScreen()
+        {
+            if (BindingWindow != null)
+            {
+                var wih = new WindowInteropHelper(BindingWindow);
+                var handle = wih.Handle;
+                _CurrentWorkingScreen = Screen.FromHandle(handle);
+            }
+            else
+            {
+                _CurrentWorkingScreen = Screen.PrimaryScreen;
+            }
         }
     }
 }

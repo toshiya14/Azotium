@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CefSharp;
+using CefSharp.Wpf;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -16,10 +18,15 @@ namespace Azotium
     {
         public static Ini Config { get; private set; }
 
-        public static string RootPath { get => AppDomain.CurrentDomain.BaseDirectory; } 
+        public static string RootPath { get => AppDomain.CurrentDomain.BaseDirectory; }
+
+        public static string LocalAppDataPath { get => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RMEGo Azotium"); }
 
         public App()
         {
+            // Create Folders.
+            Directory.CreateDirectory(LocalAppDataPath);
+
             // Load and write config.
             var configFilePath = Path.Combine(RootPath, "config.ini");
             if (File.Exists(configFilePath))
@@ -35,6 +42,14 @@ namespace Azotium
             {
                 App.Config.Save();
             };
+
+            // CEFSharp Settings
+            var cefconf = new CefSettings();
+            var cachePath = Path.Combine(LocalAppDataPath, "cache");
+            Directory.CreateDirectory(cachePath);
+            cefconf.CachePath = cachePath;
+            cefconf.CefCommandLineArgs.Add("presist_session_cookies", "1");
+            Cef.Initialize(cefconf);
         }
     }
 }

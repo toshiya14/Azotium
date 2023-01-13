@@ -43,6 +43,8 @@ namespace Azotium.ViewModel
             ////}
 
             SimpleIoc.Default.Register<MainViewModel>();
+            SimpleIoc.Default.Register<WindowViewModel>();
+            SimpleIoc.Default.Register<ConfigViewModel>();
         }
 
         public MainViewModel Main
@@ -50,6 +52,22 @@ namespace Azotium.ViewModel
             get
             {
                 return ServiceLocator.Current.GetInstance<MainViewModel>();
+            }
+        }
+
+        public ConfigViewModel Config
+        {
+            get
+            {
+                return ServiceLocator.Current.GetInstance<ConfigViewModel>();
+            }
+        }
+
+        public WindowViewModel Sub
+        {
+            get
+            {
+                return ServiceLocator.Current.GetInstance<WindowViewModel>();
             }
         }
         

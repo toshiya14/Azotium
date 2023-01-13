@@ -16,7 +16,7 @@
                 <Storyboard>
                     <DoubleAnimation Storyboard.TargetName="handler" Storyboard.TargetProperty="Opacity" To="1" Duration="00:00:00.30"></DoubleAnimation>
                     <DoubleAnimation Storyboard.TargetName="handler" Storyboard.TargetProperty="Height" To="20" Duration="00:00:00.30"></DoubleAnimation>
-                    <DoubleAnimation Storyboard.TargetName="ctrlBrowser" Storyboard.TargetProperty="Opacity" To="0.5" Duration="00:00:00.30"></DoubleAnimation>
+                    <DoubleAnimation Storyboard.TargetName="ctrlBrowser" Storyboard.TargetProperty="Opacity" To="0.9" Duration="00:00:00.30"></DoubleAnimation>
                 </Storyboard>
             </BeginStoryboard>
         </EventTrigger>
@@ -31,11 +31,13 @@
         </EventTrigger>
     </UserControl.Triggers>
     <Grid>
-        <wpf:ChromiumWebBrowser x:Name="ctrlBrowser" Address="{Binding Address}" Opacity="{Binding OpacityFloat}">
-            <i:Interaction.Behaviors>
-            </i:Interaction.Behaviors>
-        </wpf:ChromiumWebBrowser>
-        <Grid x:Name="handler" Height="20" Background="#2B2B2E" Cursor="SizeAll" MouseDown="Grid_MouseDown" MouseUp="Grid_MouseUp" VerticalAlignment="Top" Visibility="{Binding HandleVisibility}">
+        <Grid Opacity="{Binding OpacityFloat}">
+            <wpf:ChromiumWebBrowser x:Name="ctrlBrowser" Address="{Binding Address}">
+                <i:Interaction.Behaviors>
+                </i:Interaction.Behaviors>
+            </wpf:ChromiumWebBrowser>
+        </Grid>
+        <Grid x:Name="handler" Height="0" Opacity="0" Background="#2B2B2E" Cursor="SizeAll" MouseLeftButtonDown="Grid_MouseDown" MouseLeftButtonUp="Grid_MouseUp" VerticalAlignment="Top" Visibility="{Binding HandleVisibility}">
             <Border BorderBrush="#5C5C5E" BorderThickness="0.5"></Border>
             <Canvas HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="150" Height="20">
                 <Line X1="0" Y1="8" X2="{Binding Parent.ActualWidth, Mode=OneWay, RelativeSource={RelativeSource Self}}" Y2="8" Stroke="#6d6d6e" StrokeThickness="1"></Line>

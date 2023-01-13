@@ -6,18 +6,23 @@
         xmlns:local="clr-namespace:Azotium"
         xmlns:ctrls="clr-namespace:Azotium.Controls"
         mc:Ignorable="d"
-        Title="SubWindow" 
-        Height="300" 
-        Width="500" 
-        Topmost="True" 
-        ResizeMode="CanResizeWithGrip" 
-        WindowStartupLocation="CenterScreen" 
-        WindowStyle="None" 
+        Title="SubWindow"
+        Topmost="True"
+        ResizeMode="CanResizeWithGrip"
+        WindowStartupLocation="Manual"
+        WindowStyle="None"
         AllowsTransparency="True"
         Loaded="window_Loaded"
         Background="#19000000"
+        d:DataContext="{Binding Sub, Source={StaticResource Locator}}"
+        Top="{Binding Y, Mode=TwoWay}"
+        Left="{Binding X, Mode=TwoWay}"
+        Width="{Binding Width, Mode=TwoWay}"
+        Height="{Binding Height, Mode=TwoWay}"
         ShowInTaskbar="False">
-    <ctrls:WebBrowser x:Name="wb" DataContext="{Binding DataContext, ElementName=window}" />
+    <Grid>
+        <ctrls:WebBrowser x:Name="wb" DataContext="{Binding DataContext, ElementName=window}" />
+    </Grid>
 
 
 </Window>

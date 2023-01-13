@@ -24,9 +24,12 @@ namespace Azotium.Controls
         public Action<object, MouseButtonEventArgs> MouseDownOnHandler { get; set; }
         public Action<object, MouseButtonEventArgs> MouseUpOnHandler { get; set; }
 
+        public DependencyPropertyChangedEventHandler TitleChanged;
+
         public WebBrowser()
         {
             InitializeComponent();
+            this.ctrlBrowser.TitleChanged += TitleChanged;
         }
 
         private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
@@ -43,6 +46,11 @@ namespace Azotium.Controls
             {
                 MouseUpOnHandler.Invoke(sender, e);
             }
+        }
+
+        public void ShowDevTools()
+        {
+            this.ctrlBrowser?.GetBrowser()?.GetHost()?.ShowDevTools();
         }
     }
 }

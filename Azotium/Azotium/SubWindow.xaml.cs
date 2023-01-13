@@ -20,6 +20,20 @@ namespace Azotium
     public partial class SubWindow : Window
     {
         public bool PosLock { get; set; }
+
+        public Rect ClientBoundary { get; private set; }
+
+        public Action OnLoadedAction { get; set; }
+
+        private DependencyPropertyChangedEventHandler _tc;
+        public DependencyPropertyChangedEventHandler TitleChanged
+        {
+            get => this._tc; set
+            {
+                this._tc = value;
+                this.wb.TitleChanged = value;
+            }
+        }
         public SubWindow()
         {
             InitializeComponent();
@@ -42,13 +56,10 @@ namespace Azotium
             };
             wb.MouseUpOnHandler = (sender, args) =>
             {
-                if (!PosLock)
+                if (this.ResizeMode != ResizeMode.CanResizeWithGrip && !this.PosLock)
                 {
-                    if (this.ResizeMode != ResizeMode.CanResizeWithGrip)
-                    {
-                        this.ResizeMode = ResizeMode.CanResizeWithGrip;
-                        this.UpdateLayout();
-                    }
+                    this.ResizeMode = ResizeMode.CanResizeWithGrip;
+                    this.UpdateLayout();
                 }
             };
         }
@@ -57,6 +68,15 @@ namespace Azotium
         {
             WindowUtils.DisableAltF4(this);
             WindowUtils.DisableSystemContextMenu(this);
+            if (OnLoadedAction != null)
+            {
+                OnLoadedAction.Invoke();
+            }
+        }
+
+        public void ShowDevTools()
+        {
+            this.wb.ShowDevTools();
         }
     }
 }
